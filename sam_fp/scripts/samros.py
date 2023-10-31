@@ -4,9 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import rospy
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
-# from std_msgs.msg import Int16MultiArray
+from std_msgs.msg import Int16MultiArray
+from maskstack_msg_py.msg import maskstack
 from sensor_msgs.msg import Image 
 from cv_bridge import CvBridge
+from rospy.numpy_msg import numpy_msg
 import sys
 import os
 
@@ -49,7 +51,18 @@ def AutoMaskGen(image):
     return masks
 
 def maskprocessing(masks):
+    rospy.loginfo('maskprocessing is triggered.') 
+    exported_mask = masks[0]['segmentation']
+    # mask = []
     rospy.loginfo(len(masks))#TODO: How to deal with a list of masks
+    rospy.loginfo(print('initial value\n ' , exported_mask))
+    rospy.loginfo(print('mask0 value\n ' , masks[0]['segmentation']))
+    # exported_mask = np.append(exported_mask, masks[0]['segmentation']) 
+    # rospy.loginfo(print(exported_mask))
+    for i in range(len(masks)-1):
+        exported_mask = np.append(exported_mask, masks[i+1]['segmentation'],axis = 0) 
+    exported_mask = exported_mask.astype(int)
+    return exported_mask     
     
     
 def rosimg2cv(image):
@@ -61,23 +74,23 @@ def rosimg2cv(image):
 
 def cv2rosimg(image):
     bridge = CvBridge()
-    rosimg = bridge.cv2_to_imgmsg(image, encoding="passthrough")
-    return rosimg
+    ros_image = bridge.cv2_to_imgmsg(image, encoding="passthrough")
+    return ros_image
+
+def Pub_mask(mask):
+    pub = rospy.Publisher('pub_mask',maskstack, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
     
+    # rate = rospy.Rate(10) #10hz
+    pub.publish(mask)  
+      
 def callback(rosimage: Image):
     cv_image = rosimg2cv(rosimage)
+    rospy.loginfo(print('shape of cv_image is \n', cv_image.shape))
     masks = AutoMaskGen(cv_image)
-    maskprocessing(masks)#TODO: publish the list of masks after processing.
-    
-    
-# def Pub_mask(mask):
-#     pub = rospy.Publisher('pub_mask',Int16MultiArray, queue_size=1000)
-#     rospy.init_node('samros', anonymous=True)
-#     rate = rospy.Rate(10) #10hz
-#     while not rospy.is_shutdown():
-#         rospy.loginfo(mask)
-#         pub.publish(mask)
-#         rate.sleep()
+    exported_masks = maskprocessing(masks)#TODO: publish the list of masks after processing.
+    rospy.loginfo(print('shape of appended mask is \n', exported_masks.shape))
+    Pub_mask(exported_masks)
+
 
         
         
