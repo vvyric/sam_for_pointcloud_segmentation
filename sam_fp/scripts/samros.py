@@ -5,7 +5,8 @@ import numpy as np
 import rospy
 from segment_anything import sam_model_registry, SamAutomaticMaskGenerator, SamPredictor
 from std_msgs.msg import Int16MultiArray
-from maskstack_msg_py.msg import maskstack
+from masks_msgs.msg import maskID
+from masks_msgs.msg import singlemask
 from sensor_msgs.msg import Image 
 from cv_bridge import CvBridge
 from rospy.numpy_msg import numpy_msg
@@ -52,17 +53,40 @@ def AutoMaskGen(image):
 
 def maskprocessing(masks):
     rospy.loginfo('maskprocessing is triggered.') 
-    exported_mask = masks[0]['segmentation']
-    # mask = []
-    rospy.loginfo(len(masks))#TODO: How to deal with a list of masks
-    rospy.loginfo(print('initial value\n ' , exported_mask))
-    rospy.loginfo(print('mask0 value\n ' , masks[0]['segmentation']))
-    # exported_mask = np.append(exported_mask, masks[0]['segmentation']) 
-    # rospy.loginfo(print(exported_mask))
-    for i in range(len(masks)-1):
-        exported_mask = np.append(exported_mask, masks[i+1]['segmentation'],axis = 0) 
-    exported_mask = exported_mask.astype(int)
-    return exported_mask     
+    mask_list = []
+    singlemask_msg = singlemask()
+    
+    for index in range(len(masks)):
+        masks_tuple = tuple(map(tuple, masks[index]['segmentation']))
+        singlemask_msg.maskid = index
+        singlemask_msg.segmentation = masks_tuple
+        singlemask_msg.area = masks[index]['area']
+        singlemask_msg.bbox = masks[index]['bbox']
+        singlemask_msg.predicted_iou = masks[index]['predicted_iou']
+        singlemask_msg.point_coords = masks[index]['point_coords']
+        singlemask_msg.stability_score = masks[index]['stability_score']
+        singlemask_msg.crop_box = masks[index]['crop_box']
+        mask_list.append(singlemask_msg)
+    mask_list_msg = maskID()
+    mask_list_msg.maskID = mask_list
+    rospy.loginfo('singlemask length is \n')
+    rospy.loginfo(len(masks))    
+    rospy.loginfo('maskID length is \n')
+    rospy.loginfo(len(mask_list_msg.maskID))
+    # rospy.loginfo(len(tpye(singlemask_msg)))
+    rospy.loginfo('\n\n\n\n')
+    # maskID_tuple = tuple(map(tuple, mask_list_msg.maskID))
+    # exported_mask = masks[0]['segmentation']
+    # # mask = []
+    # rospy.loginfo(len(masks))#TODO: How to deal with a list of masks
+    # rospy.loginfo(print('initial value\n ' , exported_mask))
+    # rospy.loginfo(print('mask0 value\n ' , masks[0]['segmentation']))
+    # # exported_mask = np.append(exported_mask, masks[0]['segmentation']) 
+    # # rospy.loginfo(print(exported_mask))
+    # for i in range(len(masks)-1):
+    #     exported_mask = np.append(exported_mask, masks[i+1]['segmentation'],axis = 0) 
+    # exported_mask = exported_mask.astype(int)
+    return mask_list_msg #TODO: field maskID[].segmentation[] must be an integer type
     
     
 def rosimg2cv(image):
@@ -78,7 +102,8 @@ def cv2rosimg(image):
     return ros_image
 
 def Pub_mask(mask):
-    pub = rospy.Publisher('pub_mask',maskstack, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
+    
+    
     
     # rate = rospy.Rate(10) #10hz
     pub.publish(mask)  
@@ -88,7 +113,7 @@ def callback(rosimage: Image):
     rospy.loginfo(print('shape of cv_image is \n', cv_image.shape))
     masks = AutoMaskGen(cv_image)
     exported_masks = maskprocessing(masks)#TODO: publish the list of masks after processing.
-    rospy.loginfo(print('shape of appended mask is \n', exported_masks.shape))
+    # rospy.loginfo(print('shape of appended mask is \n', exported_masks.shape))
     Pub_mask(exported_masks)
 
 
@@ -96,7 +121,7 @@ def callback(rosimage: Image):
         
 if __name__ == '__main__':
     rospy.init_node('samros', anonymous=True)
-    # pub = rospy.Publisher('/pub_mask',Int16MultiArray, queue_size=1000)
+    pub = rospy.Publisher('/sam_mask',maskID, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
     sub = rospy.Subscriber('/xtion/rgb/image_raw',Image,callback) # TODO: find image topic from Tiago!
     rospy.loginfo('Node has been started.')
     # rospy.loginfo(cv_image is None)
