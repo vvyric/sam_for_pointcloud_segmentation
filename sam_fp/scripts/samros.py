@@ -57,7 +57,11 @@ def maskprocessing(masks):
     singlemask_msg = singlemask()
     
     for index in range(len(masks)):
-        masks_tuple = tuple(map(tuple, masks[index]['segmentation']))
+        masks_tuple = tuple(map(tuple, masks[index]['segmentation'].astype(int)))
+        rospy.loginfo('masks[index][segmentation].astype(int)')
+        rospy.loginfo(type(masks[index]['segmentation'].astype(int)))
+        rospy.loginfo(type(masks_tuple))
+        rospy.loginfo('\n')
         singlemask_msg.maskid = index
         singlemask_msg.segmentation = masks_tuple
         singlemask_msg.area = masks[index]['area']
@@ -69,6 +73,7 @@ def maskprocessing(masks):
         mask_list.append(singlemask_msg)
     mask_list_msg = maskID()
     mask_list_msg.maskID = mask_list
+
     rospy.loginfo('singlemask length is \n')
     rospy.loginfo(len(masks))    
     rospy.loginfo('maskID length is \n')
