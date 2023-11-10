@@ -54,22 +54,41 @@ def AutoMaskGen(image):
 def maskprocessing(masks):
     rospy.loginfo('maskprocessing is triggered.') 
     mask_list = []
-    singlemask_msg = singlemask()
+    
     
     for index in range(len(masks)):
-        masks_tuple = tuple(map(tuple, masks[index]['segmentation'].astype(int)))
-        rospy.loginfo('masks[index][segmentation].astype(int)')
-        rospy.loginfo(type(masks[index]['segmentation'].astype(int)))
-        rospy.loginfo(type(masks_tuple))
-        rospy.loginfo('\n')
+        singlemask_msg = singlemask()
+        # masks_tuple = tuple(map(tuple, masks[index]['segmentation'].astype(int)))
+        mask_shape = masks[index]['segmentation'].shape
+        # segmentation_bool = masks[index]['segmentation'].astype(np.bool_)
+        # segmentation_int = segmentation_bool.astype(np.int16)
+        segmentation_int = masks[index]['segmentation'].astype(np.int64)
+        masks_list = segmentation_int.flatten().tolist()
+        # rospy.loginfo('masks[index][segmentation].astype(int)')
+        # rospy.loginfo(type(masks[index]['segmentation'].astype(int)))
+        rospy.loginfo('masks_tuple is \n')
+        # rospy.loginfo(masks_tuple)
+        print(masks[index]['segmentation'])
+        print(segmentation_int)
+        # rospy.loginfo('\n')
+        point_coords = masks[index]['point_coords']
+        # Flatten the list
+        flat_point_coords = [item for sublist in point_coords for item in sublist]
+
+        # Optionally, ensure each element is a float64
+        flat_point_coords = np.array(flat_point_coords, dtype=np.float64)
+        crop_box = masks[index]['crop_box']
+        crop_box_int16 = np.array(crop_box, dtype=np.int16)
+        
         singlemask_msg.maskid = index
-        singlemask_msg.segmentation = masks_tuple
+        singlemask_msg.shape = mask_shape
+        singlemask_msg.segmentation = masks_list
         singlemask_msg.area = masks[index]['area']
         singlemask_msg.bbox = masks[index]['bbox']
         singlemask_msg.predicted_iou = masks[index]['predicted_iou']
-        singlemask_msg.point_coords = masks[index]['point_coords']
+        singlemask_msg.point_coords = flat_point_coords
         singlemask_msg.stability_score = masks[index]['stability_score']
-        singlemask_msg.crop_box = masks[index]['crop_box']
+        singlemask_msg.crop_box = crop_box_int16
         mask_list.append(singlemask_msg)
     mask_list_msg = maskID()
     mask_list_msg.maskID = mask_list
