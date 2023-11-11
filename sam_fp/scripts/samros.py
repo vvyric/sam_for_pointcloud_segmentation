@@ -90,13 +90,21 @@ def maskprocessing(masks):
         singlemask_msg.stability_score = masks[index]['stability_score']
         singlemask_msg.crop_box = crop_box_int16
         mask_list.append(singlemask_msg)
+    print(len(mask_list))
     mask_list_msg = maskID()
     mask_list_msg.maskID = mask_list
 
-    rospy.loginfo('singlemask length is \n')
-    rospy.loginfo(len(masks))    
+    # rospy.loginfo('singlemask length is \n')
+    # rospy.loginfo(len(masks))    
+    rospy.loginfo('\n\n\n\n')
     rospy.loginfo('maskID length is \n')
     rospy.loginfo(len(mask_list_msg.maskID))
+    print(masks[0]['segmentation'])
+    print(masks[0]['area'])
+    print(masks[0]['bbox'])
+    print(masks[0]['predicted_iou'])
+    print(masks[0]['point_coords'])
+    print(masks[0]['crop_box'])
     # rospy.loginfo(len(tpye(singlemask_msg)))
     rospy.loginfo('\n\n\n\n')
     # maskID_tuple = tuple(map(tuple, mask_list_msg.maskID))
