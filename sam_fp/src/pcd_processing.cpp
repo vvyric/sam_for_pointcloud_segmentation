@@ -1,18 +1,18 @@
 #include "pcd_processing/pcd_processing.h" // Make sure to include the correct header file
 
-// Constructor
-pcd_processing::pcd_processing(
-    const std::string &topic, 
-    const std::string &frame
-    ): pointcloud_topic(topic), base_frame(frame), is_cloud_updated(false) 
-    {
-    // Initialize any additional members if required
-}
+// // Constructor
+// pcd_processing::pcd_processing(
+//     const std::string &topic, 
+//     const std::string &frame
+//     ): pointcloud_topic(topic), base_frame(frame), is_cloud_updated(false) 
+//     {
+//     // Initialize any additional members if required
+// }
 
-// Destructor
-pcd_processing::~pcd_processing() {
-    // Clean up resources if needed
-}
+// // Destructor
+// pcd_processing::~pcd_processing() {
+//     // Clean up resources if needed
+// }
 
 // Initialize method
 bool pcd_processing::initialize(ros::NodeHandle &nh) {
@@ -35,10 +35,16 @@ void pcd_processing::update(const ros::Time &time) {
     // Publish the objects cloud if needed
     if (is_cloud_updated) {
         // Preprocess the raw cloud
-        raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_);
+        if(!raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_)) {
+            ROS_ERROR("Raw cloud preprocessing failed!");
+            return;
+        }
 
         // Cut the preprocessed cloud //TODO: pass the argument
-        cut_point_cloud(preprocessed_cloud_, processed_masks_, objects_cloud_);
+        if(!cut_point_cloud(preprocessed_cloud_, processed_masks_, objects_cloud_)){
+            ROS_ERROR("Cutting point cloud failed!");
+            return;
+        };
 
         // Publish the objects cloud
         objects_cloud_pub_.publish(objects_cloud_);
@@ -52,32 +58,84 @@ void pcd_processing::update(const ros::Time &time) {
 bool pcd_processing::raw_cloud_preprocessing(cloudPtr &input, cloudPtr &output) {
     // Implement the preprocessing logic here
     // For example, filtering, downsampling, etc.
+    // Downsample the point cloud
+    // cloudPtr downsampled_cloud(new cloud);
+    pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+    sor.setInputCloud(input);
+    sor.setLeafSize(0.1f, 0.1f, 0.1f);
+    sor.filter(*output);
+
+    // // Transform the point cloud to base frame
+    // cloudPtr transformed_cloud(new cloud);
+    // tf::StampedTransform transform_;
+    // try {
+    //     tf_listener_.waitForTransform(base_frame, input->header.frame_id, ros::Time(0), ros::Duration(3.0));
+    //     tf_listener_.lookupTransform(base_frame, input->header.frame_id, ros::Time(0), transform_);
+    // } catch (tf::TransformException &ex) {
+    //     ROS_ERROR("%s", ex.what());
+    //     return false;
+    // }
+    // pcl_ros::transformPointCloud(base_frame, *downsampled_cloud, *transformed_cloud, tf_listener_);
+
+
 
     return true; // Return true on success
 }
 
 // Cut point cloud
-bool pcd_processing::cut_point_cloud(cloudPtr &input, masks_msgs::maskID::Ptr masks, cloudPtr &objects) {
+bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlemask> &masks, cloudPtr &objects) {
     // Implement the logic to cut the point cloud using masks
+    // Point Cloud frame_id: xtion_rgb_optical_frame
+    // image_raw frame_id: xtion_rgb_optical_frame
+    // masks frame_id: xtion_rgb_optical_frame
+        // Clear the output cloud
+    objects->clear();
 
-    return true; // Return true on success
+    // Iterate over each mask
+    for (const auto& mask : masks) {
+        // Convert segmentation matrix to a binary mask, if necessary
+        // Assuming segmentation is already a binary mask where '1' indicates the points to keep
+
+        // Find the bounding box of the mask
+        int min_x = mask.bbox[0];
+        int min_y = mask.bbox[1];
+        int width = mask.bbox[2];
+        int height = mask.bbox[3];
+
+        // Iterate over the points in the bounding box
+        for (int i = min_y; i < min_y + height; ++i) {
+            for (int j = min_x; j < min_x + width; ++j) {
+                // Check if the mask includes this point
+                if (mask.segmentation(i, j) == 1) {
+                    // Calculate the index in the point cloud
+                    int index = i * input->width + j;
+                    if (index < input->points.size()) {
+                        // Add the point to the output cloud
+                        objects->push_back(input->points[index]);
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
 }
+
 
 // Cloud callback
 void pcd_processing::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
     // Handle new point cloud messages
-    // Convert and process as needed
+    is_cloud_updated = true;
+    pcl::fromROSMsg(*msg, *raw_cloud_);
 }
 
 // Masks callback
 void pcd_processing::masksCallback(const masks_msgs::maskID::Ptr &msg) {
-    // Handle new masks messages
-    // Process as required
+    // process new recieved masks
     processed_masks_ = maskID_msg_processing(msg);
-    //TODO: continue.
+
 }
 
-#include "pcd_processing/pcd_processing.h" // Make sure to include the correct header file
 
 std::vector<pcd_processing::singlemask> pcd_processing::maskID_msg_processing(const masks_msgs::maskID::Ptr& maskID) {
     ROS_INFO("mask_msg_preprocessing is triggered.");
