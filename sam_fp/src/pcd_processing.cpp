@@ -16,10 +16,11 @@
 
 // Initialize method
 bool pcd_processing::initialize(ros::NodeHandle &nh) {
+    ROS_INFO_STREAM(pcd_processing::pointcloud_topic);
+
     // Initialize ROS subscribers, publishers, and other members
     point_cloud_sub_ = nh.subscribe(pointcloud_topic, 1, &pcd_processing::cloudCallback, this);
     objects_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/objects_cloud", 1);
-
     // Initialize pointers
     raw_cloud_.reset(new cloud);
     preprocessed_cloud_.reset(new cloud);
@@ -47,7 +48,9 @@ void pcd_processing::update(const ros::Time &time) {
         };
 
         // Publish the objects cloud
-        objects_cloud_pub_.publish(objects_cloud_);
+        pcl::toROSMsg(*objects_cloud_, cloudmsg_);
+        ROS_INFO_STREAM(*objects_cloud_);
+        objects_cloud_pub_.publish(cloudmsg_);
 
         // Reset the flag
         is_cloud_updated = false;
@@ -60,11 +63,15 @@ bool pcd_processing::raw_cloud_preprocessing(cloudPtr &input, cloudPtr &output) 
     // For example, filtering, downsampling, etc.
     // Downsample the point cloud
     // cloudPtr downsampled_cloud(new cloud);
-    pcl::VoxelGrid<pcl::PointXYZRGB> sor;
-    sor.setInputCloud(input);
-    sor.setLeafSize(0.1f, 0.1f, 0.1f);
-    sor.filter(*output);
 
+    // pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+    // sor.setInputCloud(input);
+    // sor.setLeafSize(0.1f, 0.1f, 0.1f);
+    // sor.filter(*output);
+    *output = *input;
+
+    // ROS_INFO_STREAM("RAW");
+    // ROS_INFO_STREAM(*output);
     // // Transform the point cloud to base frame
     // cloudPtr transformed_cloud(new cloud);
     // tf::StampedTransform transform_;
@@ -88,7 +95,9 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
     // Point Cloud frame_id: xtion_rgb_optical_frame
     // image_raw frame_id: xtion_rgb_optical_frame
     // masks frame_id: xtion_rgb_optical_frame
-        // Clear the output cloud
+    // Clear the output cloud
+    ROS_INFO_STREAM("CUT");
+    // ROS_INFO_STREAM(*input);
     objects->clear();
 
     // Iterate over each mask
@@ -117,7 +126,8 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
             }
         }
     }
-
+    ROS_INFO_STREAM("objectsPCD:");
+    ROS_INFO_STREAM(*objects);
     return true;
 }
 
@@ -125,7 +135,10 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
 // Cloud callback
 void pcd_processing::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
     // Handle new point cloud messages
+    cloudmsg_.data.clear();   
+    cloudmsg_ = *msg;
     is_cloud_updated = true;
+
     pcl::fromROSMsg(*msg, *raw_cloud_);
 }
 

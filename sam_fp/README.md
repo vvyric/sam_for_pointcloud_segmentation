@@ -14,8 +14,9 @@ rosrun play_motion move_joint head_2_joint -0.7 2.0
 
 ##### To run sam_fp
 
-```
+```bash
 rosrun sam_fp samros.py
-rosrun sam_fp sampcl.oy
+# rosrun sam_fp sampcl.oy
+rosrun sam_fp pcd_processing_node
 ```
 

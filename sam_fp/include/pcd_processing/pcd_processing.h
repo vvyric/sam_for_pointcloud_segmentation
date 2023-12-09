@@ -49,12 +49,13 @@
 class pcd_processing
 {
 private:
-    const std::string &pointcloud_topic;
-    const std::string &base_frame;
+    const std::string pointcloud_topic;
+    const std::string base_frame;
     bool is_cloud_updated;                      //!< new pointcloud recieved
+    
 
 public:
-
+    
     // Alias:
     typedef pcl::PointXYZRGB point;             // Point Type (vector type)
     typedef pcl::PointCloud<pcl::PointXYZRGB> cloud;       // PointCloud Type (cloud vector type)
@@ -65,6 +66,10 @@ public:
                    const std::string &frame ="base_link"):
                    pointcloud_topic(topic),base_frame(frame),is_cloud_updated(false) {
                     // Emty constructor body 
+                    ROS_INFO_STREAM("In constructor");
+                    ROS_INFO_STREAM(pointcloud_topic);
+                    ROS_INFO_STREAM(base_frame);
+                    // ROS_INFO_STREAM(topic)
                    } // Initialize and refer to topic and frame with default values. Initialize member variables, allocate resources, etc. 
     
     ~pcd_processing(){
@@ -142,6 +147,7 @@ private:
     cloudPtr preprocessed_cloud_;               //!< Internal preprocessed cloud     
     cloudPtr objects_cloud_;                    //!< Internal objects point cloud
     masks_msgs::maskID::Ptr latest_maskID_msg_; //!< Internal latest maskID message
+    sensor_msgs::PointCloud2 cloudmsg_; //!< save msg to cloudmsg_
     
 
     std::vector<singlemask> processed_masks_; //!< Internal processed masks
