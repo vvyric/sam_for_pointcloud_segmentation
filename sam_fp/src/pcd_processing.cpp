@@ -16,10 +16,11 @@
 
 // Initialize method
 bool pcd_processing::initialize(ros::NodeHandle &nh) {
-    ROS_INFO_STREAM(pcd_processing::pointcloud_topic);
+    // ROS_INFO_STREAM(pcd_processing::pointcloud_topic);
 
     // Initialize ROS subscribers, publishers, and other members
     point_cloud_sub_ = nh.subscribe(pointcloud_topic, 1, &pcd_processing::cloudCallback, this);
+    masks_sub_ = nh.subscribe("/sam_mask", 1, &pcd_processing::masksCallback, this);
     objects_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/objects_cloud", 1);
     // Initialize pointers
     raw_cloud_.reset(new cloud);
@@ -34,6 +35,8 @@ void pcd_processing::update(const ros::Time &time) {
     // Update the pcd_processing object
     // For example, call preprocessing and cutting methods here
     // Publish the objects cloud if needed
+    // ROS_INFO_STREAM("update is triggered.");
+    // ROS_INFO_STREAM(is_cloud_updated);
     if (is_cloud_updated) {
         // Preprocess the raw cloud
         if(!raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_)) {
@@ -49,6 +52,9 @@ void pcd_processing::update(const ros::Time &time) {
 
         // Publish the objects cloud
         pcl::toROSMsg(*objects_cloud_, cloudmsg_);
+        ROS_INFO_STREAM("raw_cloud_:");
+        ROS_INFO_STREAM(*raw_cloud_);
+        ROS_INFO_STREAM("objects_cloud_:");
         ROS_INFO_STREAM(*objects_cloud_);
         objects_cloud_pub_.publish(cloudmsg_);
 
@@ -96,9 +102,10 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
     // image_raw frame_id: xtion_rgb_optical_frame
     // masks frame_id: xtion_rgb_optical_frame
     // Clear the output cloud
-    ROS_INFO_STREAM("CUT");
+    // ROS_INFO_STREAM("CUT");
     // ROS_INFO_STREAM(*input);
-    objects->clear();
+    *objects = *input;
+    objects->points.clear();
 
     // Iterate over each mask
     for (const auto& mask : masks) {
@@ -111,6 +118,10 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
         int width = mask.bbox[2];
         int height = mask.bbox[3];
 
+        int number_of_ones = pcd_processing::countOnes(mask.segmentation);
+        ROS_INFO_STREAM("number_of_ones:");
+        ROS_INFO_STREAM(number_of_ones);
+
         // Iterate over the points in the bounding box
         for (int i = min_y; i < min_y + height; ++i) {
             for (int j = min_x; j < min_x + width; ++j) {
@@ -120,14 +131,18 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
                     int index = i * input->width + j;
                     if (index < input->points.size()) {
                         // Add the point to the output cloud
-                        objects->push_back(input->points[index]);
+                        objects->points.push_back(input->points[index]);
                     }
                 }
             }
         }
     }
-    ROS_INFO_STREAM("objectsPCD:");
-    ROS_INFO_STREAM(*objects);
+    objects->width = objects->points.size();
+    objects->height = 1;  // Setting height to 1 implies the cloud is unorganized
+    objects->is_dense = false;  // Set to false if there might be NaN or invalid points
+
+    // ROS_INFO_STREAM("objectsPCD:");
+    // ROS_INFO_STREAM(*objects);
     return true;
 }
 
@@ -135,11 +150,14 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
 // Cloud callback
 void pcd_processing::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
     // Handle new point cloud messages
-    cloudmsg_.data.clear();   
-    cloudmsg_ = *msg;
+    // cloudmsg_.reset();
+    // cloudmsg_.data.clear();   
+    // cloudmsg_ = *msg;
     is_cloud_updated = true;
 
     pcl::fromROSMsg(*msg, *raw_cloud_);
+    // ROS_INFO_STREAM("cloudCallback is triggered.");
+    // ROS_INFO_STREAM(*raw_cloud_);
 }
 
 // Masks callback
@@ -171,10 +189,48 @@ std::vector<pcd_processing::singlemask> pcd_processing::maskID_msg_processing(co
         mask.crop_box = singlemask_msg.crop_box;
 
         masks.push_back(mask);
+        ROS_INFO_STREAM("length of masks:");
+        ROS_INFO_STREAM(masks.size());
+        ROS_INFO_STREAM("masks segmentation:");
+        ROS_INFO_STREAM("masks[0].segmentation.rows():");
+        ROS_INFO_STREAM(masks[0].segmentation.rows());
+        ROS_INFO_STREAM("masks[0].segmentation.cols():");
+        ROS_INFO_STREAM(masks[0].segmentation.cols());
+        ROS_INFO_STREAM("area");
+        ROS_INFO_STREAM(masks[0].area);
+        ROS_INFO_STREAM("bbox");
+        ROS_INFO_STREAM(masks[0].bbox[0]);
+        ROS_INFO_STREAM(masks[0].bbox[1]);
+        ROS_INFO_STREAM(masks[0].bbox[2]);
+        ROS_INFO_STREAM(masks[0].bbox[3]);
+        ROS_INFO_STREAM("predicted_iou");
+        ROS_INFO_STREAM(masks[0].predicted_iou);
+        ROS_INFO_STREAM("point_coords");
+        ROS_INFO_STREAM(masks[0].point_coords);
+        ROS_INFO_STREAM("stability_score");
+        ROS_INFO_STREAM(masks[0].stability_score);
+        ROS_INFO_STREAM("crop_box");
+        ROS_INFO_STREAM(masks[0].crop_box[0]);
+        ROS_INFO_STREAM(masks[0].crop_box[1]);
+        ROS_INFO_STREAM(masks[0].crop_box[2]);
+        ROS_INFO_STREAM(masks[0].crop_box[3]);
+
     }
 
     return masks;
 
-};
+}
+
+int pcd_processing::countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix) {
+    int count = 0;
+    for (int i = 0; i < matrix.rows(); i++) {
+        for (int j = 0; j < matrix.cols(); j++) {
+            if (matrix(i, j) == 1) {
+                count++;
+            }
+        }
+    }
+    return count;
+}
 
 // Additional methods and logic as needed

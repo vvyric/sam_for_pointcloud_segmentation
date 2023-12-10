@@ -12,6 +12,7 @@ from cv_bridge import CvBridge
 from rospy.numpy_msg import numpy_msg
 import sys
 import os
+import cv2
 
 
 def show_anns(anns):
@@ -41,7 +42,15 @@ def AutoMaskGen(image):
     sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
     sam.to(device=device)
 
-    mask_generator = SamAutomaticMaskGenerator(sam)
+    mask_generator = SamAutomaticMaskGenerator(   
+        model=sam,
+        points_per_side=10,
+        pred_iou_thresh=0.92,
+        stability_score_thresh=0.92,
+        crop_n_layers=1,
+        crop_n_points_downscale_factor=2,
+        min_mask_region_area=100,  # Requires open-cv to run post-processing)
+    )
     masks = mask_generator.generate(image)
     
     plt.figure(figsize=(10,10))
@@ -100,6 +109,8 @@ def maskprocessing(masks):
     rospy.loginfo('maskID length is \n')
     rospy.loginfo(len(mask_list_msg.maskID))
     print(masks[0]['segmentation'])
+    print('number of 1 in mask is \n')
+    print([np.sum(mask['segmentation'] == 1) for mask in masks])
     print(masks[0]['area'])
     print(masks[0]['bbox'])
     print(masks[0]['predicted_iou'])
@@ -142,6 +153,8 @@ def Pub_mask(mask):
       
 def callback(rosimage: Image):
     cv_image = rosimg2cv(rosimage)
+    filename = 'saved_img.png'
+    cv2.imwrite(filename, cv_image)
     rospy.loginfo(print('shape of cv_image is \n', cv_image.shape))
     masks = AutoMaskGen(cv_image)
     exported_masks = maskprocessing(masks)#TODO: publish the list of masks after processing.

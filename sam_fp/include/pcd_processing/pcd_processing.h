@@ -65,11 +65,7 @@ public:
     pcd_processing(const std::string &topic = "/xtion/depth_registered/points",
                    const std::string &frame ="base_link"):
                    pointcloud_topic(topic),base_frame(frame),is_cloud_updated(false) {
-                    // Emty constructor body 
-                    ROS_INFO_STREAM("In constructor");
-                    ROS_INFO_STREAM(pointcloud_topic);
-                    ROS_INFO_STREAM(base_frame);
-                    // ROS_INFO_STREAM(topic)
+
                    } // Initialize and refer to topic and frame with default values. Initialize member variables, allocate resources, etc. 
     
     ~pcd_processing(){
@@ -137,12 +133,27 @@ private:
      */
     void masksCallback(const masks_msgs::maskID::Ptr &msg);
 
+//     std::ostream& operator<<(std::ostream& os, const pcd_processing::singlemask& mask) {
+//     os << "Mask ID: " << mask.maskid << "\n"
+//        << "Segmentation: " << mask.segmentation << "\n"
+//        << "Area: " << mask.area << "\n"
+//        << "Bbox: " << mask.bbox << "\n"
+//        << "Predicted IOU: " << mask.predicted_iou << "\n"
+//        << "Point_coords: " << mask.point_coords << "\n"
+//        << "Stability Score: " << mask.stability_score << "\n";
+//        << "Crop box: " << mask.crop_box << "\n"
+//     // Add other fields as needed
+//     return os;
+// }
+    int countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix); 
+
 
 
     // Private variables
 
     ros::Subscriber point_cloud_sub_;           //!< Subscriber to the PointCloud data
-    ros::Publisher objects_cloud_pub_;          //!< Publish objects point cloud 
+    ros::Publisher objects_cloud_pub_;          //!< Publish objects point cloud
+    ros::Subscriber masks_sub_;                 //!< Subscriber to the masks data 
     cloudPtr raw_cloud_ ;                       //!< Internal raw point cloud
     cloudPtr preprocessed_cloud_;               //!< Internal preprocessed cloud     
     cloudPtr objects_cloud_;                    //!< Internal objects point cloud
