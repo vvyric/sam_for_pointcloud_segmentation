@@ -189,7 +189,8 @@ std::vector<pcd_processing::singlemask> pcd_processing::maskID_msg_processing(co
         mask.crop_box = singlemask_msg.crop_box;
 
         masks.push_back(mask);
-        ROS_INFO_STREAM("length of masks:");
+
+        ROS_INFO_STREAM("length of masks after erase:");
         ROS_INFO_STREAM(masks.size());
         ROS_INFO_STREAM("masks segmentation:");
         ROS_INFO_STREAM("masks[0].segmentation.rows():");
@@ -215,6 +216,19 @@ std::vector<pcd_processing::singlemask> pcd_processing::maskID_msg_processing(co
         ROS_INFO_STREAM(masks[0].crop_box[2]);
         ROS_INFO_STREAM(masks[0].crop_box[3]);
 
+    }
+
+    ROS_INFO_STREAM("length of masks before erase:");
+    ROS_INFO_STREAM(masks.size());
+
+    // Sort the masks by area
+    auto compareArea = [](const singlemask& a, const singlemask& b) {
+        return a.area < b.area;
+    };
+    std::sort(masks.begin(), masks.end(), compareArea);
+    // Erase the masks with the largest area (the background mask)
+    if(masks.size() > 5) {
+        masks.erase(masks.end() - 5, masks.end());
     }
 
     return masks;

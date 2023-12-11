@@ -7,6 +7,7 @@
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
 #include <std_msgs/Char.h>
+#include <algorithm>
 
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
