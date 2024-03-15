@@ -4,6 +4,7 @@
 
 ```
 roslaunch sam_fp tiago.launch world_suffix:=tutorial4
+roslaunch sam_fp tiago.launch world_suffix:=tutorial4_complex
 ```
 
 ##### To down the Tiago's head
