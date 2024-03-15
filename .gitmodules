@@ -1,3 +1,5 @@
 [submodule "yolact_ros"]
 	path = yolact_ros
 	url = https://github.com/Eruvae/yolact_ros.git
+[submodule "yolact_ros_msgs"]
+	url = https://github.com/Eruvae/yolact_ros_msgs.git
