@@ -61,12 +61,12 @@ class SamClipRos:
 
         mask_generator = SamAutomaticMaskGenerator(   
             model=sam,
-            points_per_side=10,
-            pred_iou_thresh=0.92,
-            stability_score_thresh=0.92,
-            crop_n_layers=1,
-            crop_n_points_downscale_factor=2,
-            min_mask_region_area=100,  # Requires open-cv to run post-processing)
+            # points_per_side=10,
+            # pred_iou_thresh=0.92,
+            # stability_score_thresh=0.92,
+            # crop_n_layers=1,
+            # crop_n_points_downscale_factor=2,
+            # min_mask_region_area=100,  # Requires open-cv to run post-processing)
         )
         masks = mask_generator.generate(image)
         
@@ -161,6 +161,7 @@ class SamClipRos:
         return np.multiply(image, seg_mask)
 
     def crop_masks(self, image, masks):
+        self.cropped_boxes = []
         self.cropped_images = []
         for mask in masks:
             x1, y1, x2, y2 = self.convert_box_xywh_to_xyxy(mask["bbox"])
@@ -181,9 +182,11 @@ class SamClipRos:
 
     def get_indices_of_values_above_threshold(self, values, threshold):
         # Pair each value with its index and filter by threshold
+        filtered_values_with_indices = []
         filtered_values_with_indices = [(i, v) for i, v in enumerate(values) if v > threshold]
         
         # Sort the filtered pairs by value in descending order, then extract indices
+        sorted_indices = []
         sorted_indices = [i for i, v in sorted(filtered_values_with_indices, key=lambda x: x[1], reverse=True)]
         
         return sorted_indices
@@ -191,24 +194,37 @@ class SamClipRos:
     # Run sam and clip model
     def run_sam_clip(self, cv_image):
         chosen_masks = []
+        masks = []
         # Run sam model
         masks = self.AutoMaskGen(cv_image)
+        print(len(masks))
         # Load clip model
         self.load_clip_model()
         # Crop masks
         self.crop_masks(cv_image, masks)
         # Run clip model
+        scores = []
+        indices = []
         scores = self.retriev(self.cropped_boxes, self.search_text)
         indices = self.get_indices_of_values_above_threshold(scores, 0.05)
-        
-        chosen_masks = masks[indices[0]]
+        if len(indices) == 0:
+            print ('No masks found!')
+            return -1
+        else:
+            rows = len(indices)
+            # cols = len(indices[0])
+            print('row is', rows)
+            print('indices is', indices[0])
+            print(len(masks))
+            print('masks is', masks[0])
+            chosen_masks = masks[indices[0]]
         
         segmentation_mask_image = chosen_masks["segmentation"].astype('uint8') * 255
         seg_image = cv_image.copy()
         seg_image[segmentation_mask_image > 0] = [255,0,0]
-        plt.imshow(seg_image)
-        plt.axis('off')
-        plt.show()
+        # plt.imshow(seg_image)
+        # plt.axis('off')
+        # plt.show()
         
         exported_masks = self.maskprocessing(chosen_masks,True)
         self.Pub_mask(exported_masks)
