@@ -61,7 +61,7 @@
   <exec_depend>roscpp</exec_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
-  <exec_depend>segment_anything</exec_depend>
+  <!-- <exec_depend>segment_anything</exec_depend> -->
   <exec_depend>masks_msgs</exec_depend>
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>tf</exec_depend>
