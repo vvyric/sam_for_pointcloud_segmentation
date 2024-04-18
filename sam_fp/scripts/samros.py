@@ -61,6 +61,7 @@ class SamClipRos:
 
         mask_generator = SamAutomaticMaskGenerator(   
             model=sam,
+            # uncomment below to fine tune parameters
             # points_per_side=10,
             # pred_iou_thresh=0.92,
             # stability_score_thresh=0.92,
@@ -69,7 +70,7 @@ class SamClipRos:
             # min_mask_region_area=100,  # Requires open-cv to run post-processing)
         )
         masks = mask_generator.generate(image)
-        
+        # visualize sam auto mask generator
         # plt.figure(figsize=(10,10))
         # plt.imshow(image)
         # self.show_anns(masks)
@@ -222,6 +223,7 @@ class SamClipRos:
         segmentation_mask_image = chosen_masks["segmentation"].astype('uint8') * 255
         seg_image = cv_image.copy()
         seg_image[segmentation_mask_image > 0] = [255,0,0]
+        # visualize CLIP result
         # plt.imshow(seg_image)
         # plt.axis('off')
         # plt.show()
@@ -282,29 +284,8 @@ class SamClipRos:
         
 if __name__ == '__main__':
     samclipros = SamClipRos()
-    # rospy.loginfo(cv_image is None)
-    # try:
-    #     while not rospy.is_shutdown():
-    #         if cv_image is not None:
-    #             # AutoMaskGen()
-    #             cv_image = None  # Reset cv_image after processing to avoid repeated processing
-    # except KeyboardInterrupt:
-        # rospy.signal_shutdown("KeyboardInterrupt")
     rospy.spin()
     
     
     
-'''
-rostopic info /xtion/rgb/image_raw
-Type: sensor_msgs/Image
 
-Publishers: 
- * /gazebo (http://desktop:37407/)
-
-Subscribers: 
- * /image_raw_to_rect_color_relay (http://desktop:45563/)
- * /darknet_ros (http://desktop:40941/)
- * /rviz (http://desktop:43473/)
- * /xtion/rgb/image_proc (http://desktop:37891/)
-
-'''

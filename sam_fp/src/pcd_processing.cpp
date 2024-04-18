@@ -1,18 +1,5 @@
-#include "pcd_processing/pcd_processing.h" // Make sure to include the correct header file
+#include "pcd_processing/pcd_processing.h" 
 
-// // Constructor
-// pcd_processing::pcd_processing(
-//     const std::string &topic, 
-//     const std::string &frame
-//     ): pointcloud_topic(topic), base_frame(frame), is_cloud_updated(false) 
-//     {
-//     // Initialize any additional members if required
-// }
-
-// // Destructor
-// pcd_processing::~pcd_processing() {
-//     // Clean up resources if needed
-// }
 
 // Initialize method
 bool pcd_processing::initialize(ros::NodeHandle &nh) {
@@ -33,10 +20,7 @@ bool pcd_processing::initialize(ros::NodeHandle &nh) {
 // Update method
 void pcd_processing::update(const ros::Time &time) {
     // Update the pcd_processing object
-    // For example, call preprocessing and cutting methods here
-    // Publish the objects cloud if needed
-    // ROS_INFO_STREAM("update is triggered.");
-    // ROS_INFO_STREAM(is_cloud_updated);
+
     if (is_cloud_updated) {
         // Preprocess the raw cloud
         if(!raw_cloud_preprocessing(raw_cloud_, preprocessed_cloud_)) {
@@ -65,30 +49,12 @@ void pcd_processing::update(const ros::Time &time) {
 
 // Raw cloud preprocessing
 bool pcd_processing::raw_cloud_preprocessing(cloudPtr &input, cloudPtr &output) {
-    // Implement the preprocessing logic here
-    // For example, filtering, downsampling, etc.
-    // Downsample the point cloud
-    // cloudPtr downsampled_cloud(new cloud);
 
-    // pcl::VoxelGrid<pcl::PointXYZRGB> sor;
-    // sor.setInputCloud(input);
-    // sor.setLeafSize(0.1f, 0.1f, 0.1f);
-    // sor.filter(*output);
+    // Modify if further preprocessing needed
+    // Note: Since the point cloud segmentation is pixel-wise, preprocessing may cause lack of points.
+
     *output = *input;
 
-    // ROS_INFO_STREAM("RAW");
-    // ROS_INFO_STREAM(*output);
-    // // Transform the point cloud to base frame
-    // cloudPtr transformed_cloud(new cloud);
-    // tf::StampedTransform transform_;
-    // try {
-    //     tf_listener_.waitForTransform(base_frame, input->header.frame_id, ros::Time(0), ros::Duration(3.0));
-    //     tf_listener_.lookupTransform(base_frame, input->header.frame_id, ros::Time(0), transform_);
-    // } catch (tf::TransformException &ex) {
-    //     ROS_ERROR("%s", ex.what());
-    //     return false;
-    // }
-    // pcl_ros::transformPointCloud(base_frame, *downsampled_cloud, *transformed_cloud, tf_listener_);
 
 
 
@@ -101,16 +67,13 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
     // Point Cloud frame_id: xtion_rgb_optical_frame
     // image_raw frame_id: xtion_rgb_optical_frame
     // masks frame_id: xtion_rgb_optical_frame
+
     // Clear the output cloud
-    // ROS_INFO_STREAM("CUT");
-    // ROS_INFO_STREAM(*input);
     *objects = *input;
     objects->points.clear();
 
     // Iterate over each mask
     for (const auto& mask : masks) {
-        // Convert segmentation matrix to a binary mask, if necessary
-        // Assuming segmentation is already a binary mask where '1' indicates the points to keep
 
         // Find the bounding box of the mask
         int min_x = mask.bbox[0];
@@ -141,23 +104,17 @@ bool pcd_processing::cut_point_cloud(cloudPtr &input, const std::vector<singlema
     objects->height = 1;  // Setting height to 1 implies the cloud is unorganized
     objects->is_dense = false;  // Set to false if there might be NaN or invalid points
 
-    // ROS_INFO_STREAM("objectsPCD:");
-    // ROS_INFO_STREAM(*objects);
     return true;
 }
 
 
 // Cloud callback
 void pcd_processing::cloudCallback(const sensor_msgs::PointCloud2ConstPtr &msg) {
-    // Handle new point cloud messages
-    // cloudmsg_.reset();
-    // cloudmsg_.data.clear();   
-    // cloudmsg_ = *msg;
+
     is_cloud_updated = true;
 
     pcl::fromROSMsg(*msg, *raw_cloud_);
-    // ROS_INFO_STREAM("cloudCallback is triggered.");
-    // ROS_INFO_STREAM(*raw_cloud_);
+
 }
 
 // Masks callback
@@ -190,31 +147,7 @@ std::vector<pcd_processing::singlemask> pcd_processing::maskID_msg_processing(co
 
         masks.push_back(mask);
 
-        ROS_INFO_STREAM("length of masks after erase:");
-        ROS_INFO_STREAM(masks.size());
-        ROS_INFO_STREAM("masks segmentation:");
-        ROS_INFO_STREAM("masks[0].segmentation.rows():");
-        ROS_INFO_STREAM(masks[0].segmentation.rows());
-        ROS_INFO_STREAM("masks[0].segmentation.cols():");
-        ROS_INFO_STREAM(masks[0].segmentation.cols());
-        ROS_INFO_STREAM("area");
-        ROS_INFO_STREAM(masks[0].area);
-        ROS_INFO_STREAM("bbox");
-        ROS_INFO_STREAM(masks[0].bbox[0]);
-        ROS_INFO_STREAM(masks[0].bbox[1]);
-        ROS_INFO_STREAM(masks[0].bbox[2]);
-        ROS_INFO_STREAM(masks[0].bbox[3]);
-        ROS_INFO_STREAM("predicted_iou");
-        ROS_INFO_STREAM(masks[0].predicted_iou);
-        ROS_INFO_STREAM("point_coords");
-        ROS_INFO_STREAM(masks[0].point_coords);
-        ROS_INFO_STREAM("stability_score");
-        ROS_INFO_STREAM(masks[0].stability_score);
-        ROS_INFO_STREAM("crop_box");
-        ROS_INFO_STREAM(masks[0].crop_box[0]);
-        ROS_INFO_STREAM(masks[0].crop_box[1]);
-        ROS_INFO_STREAM(masks[0].crop_box[2]);
-        ROS_INFO_STREAM(masks[0].crop_box[3]);
+
 
     }
 
@@ -247,4 +180,4 @@ int pcd_processing::countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen
     return count;
 }
 
-// Additional methods and logic as needed
+

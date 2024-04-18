@@ -1,4 +1,4 @@
-## Implement SAM in ROS
+## Implement SAM and CLIP in ROS
 
 ##### To launch a world with a table of items and Tiago (for test purpose)
 

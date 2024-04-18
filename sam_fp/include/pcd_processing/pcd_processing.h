@@ -134,18 +134,7 @@ private:
      */
     void masksCallback(const masks_msgs::maskID::Ptr &msg);
 
-//     std::ostream& operator<<(std::ostream& os, const pcd_processing::singlemask& mask) {
-//     os << "Mask ID: " << mask.maskid << "\n"
-//        << "Segmentation: " << mask.segmentation << "\n"
-//        << "Area: " << mask.area << "\n"
-//        << "Bbox: " << mask.bbox << "\n"
-//        << "Predicted IOU: " << mask.predicted_iou << "\n"
-//        << "Point_coords: " << mask.point_coords << "\n"
-//        << "Stability Score: " << mask.stability_score << "\n";
-//        << "Crop box: " << mask.crop_box << "\n"
-//     // Add other fields as needed
-//     return os;
-// }
+
     int countOnes(const Eigen::Matrix<int64_t, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor> &matrix); 
 
 
