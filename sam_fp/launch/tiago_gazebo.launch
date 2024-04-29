@@ -22,6 +22,7 @@
     <arg name="use_moveit_camera" default="false"/>
     <arg name="use_dynamic_footprint" default="false"/>
 
+
     <!-- Set Gazebo environment variables to find the models contained in this package and the tiago library -->
     <env name="GAZEBO_MODEL_PATH"  
          value="$(optenv GAZEBO_MODEL_PATH):$(find object_detection_world)/models:$(find tiago_gazebo)/models"/>

@@ -20,13 +20,15 @@ import sys
 class SamClipRos:
     def __init__(self):
         rospy.init_node('samros', anonymous=True)
+        self.image_topic = rospy.get_param('image_topic', '/xtion/rgb/image_raw') # Default is image_raw topic of Tiago robot
         self.pub = rospy.Publisher('/sam_mask',maskID, queue_size=1000) #TODO: pub np.ndarray related func: maskprocessing() and Pub_mask()
-        self.sub = rospy.Subscriber('/xtion/rgb/image_raw',SensorImage,self.callback) # TODO: find image topic from Tiago!
+        self.sub = rospy.Subscriber(self.image_topic, SensorImage, self.callback) # TODO: find image topic from Tiago!
         self.cropped_boxes = []
-        if len(sys.argv) > 1:
-            self.search_text = str(sys.argv[1])
-        else:
-            self.search_text = None
+        self.search_text = rospy.get_param('search_text', None)
+        # if len(sys.argv) > 1:
+        #     self.search_text = str(sys.argv[1])
+        # else:
+        #     self.search_text = None
         rospy.loginfo('Node has been started.')
     
         

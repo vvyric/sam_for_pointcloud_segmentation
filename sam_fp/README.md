@@ -1,6 +1,6 @@
 ## Implement SAM and CLIP in ROS
 
-##### To launch a world with a table of items and Tiago (for test purpose)
+##### To launch a world with a table of items and Tiago (for test purpose) (Gazebo)
 
 ```
 roslaunch sam_fp tiago.launch world_suffix:=tutorial4
@@ -17,7 +17,6 @@ rosrun play_motion move_joint head_2_joint -0.7 2.0
 
 ```bash
 rosrun sam_fp samros.py “beer”
-# rosrun sam_fp sampcl.oy
 rosrun sam_fp pcd_processing_node
 ```
 
