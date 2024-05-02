@@ -53,6 +53,10 @@ class SamClipRos:
         rospy.loginfo('AutoMaskGen is triggered.')
         rospy.loginfo(os.getcwd())# get current working directory
         sys.path.append("..")
+        rospy.logwarn(len(sys.path))
+        rospy.logwarn(os.getcwd())
+        for path in sys.path:
+            rospy.loginfo(path)
         sam_checkpoint = "src/fp/checkpoints/sam_vit_h_4b8939.pth"
         model_type = "vit_h"
 
@@ -285,6 +289,8 @@ class SamClipRos:
             
         
 if __name__ == '__main__':
+    import sys
+
     samclipros = SamClipRos()
     rospy.spin()
     
