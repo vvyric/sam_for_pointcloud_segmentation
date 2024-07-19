@@ -1,5 +1,5 @@
 ## Environment preparation:
-Follow the install instructions of [!Segment Anything](https://github.com/facebookresearch/segment-anything) and [!CLIP](https://github.com/openai/CLIP)
+Follow the install instructions of [Segment Anything](https://github.com/facebookresearch/segment-anything) and [CLIP](https://github.com/openai/CLIP)
 
 build the ROS package.
 
