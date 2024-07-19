@@ -1,9 +1,9 @@
 ## Environment preparation:
-Follow the install instructions of Segment Anything[!https://github.com/facebookresearch/segment-anything] and CLIP[!https://github.com/openai/CLIP]
+Follow the install instructions of [!Segment Anything](https://github.com/facebookresearch/segment-anything) and [!CLIP](https://github.com/openai/CLIP)
 
 build the ROS package.
 
-Package based on Tiago robot from Pal. change the corresponding camera topic etc. before using.
+Package based on Tiago robot from Pal. Change the corresponding camera topic etc. before using.
 
 RUN
 ```
